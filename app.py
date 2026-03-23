@@ -185,15 +185,18 @@ def price_ticker():
 # ══════════════════════════════════════════════════
 @app.route('/')
 def index():
-    return send_from_directory('static', 'index.html')
-
-@app.route('/<path:path>')
-def serve_static(path):
-    return send_from_directory('static', path)
+    return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/brain')
 def brain():
-    return send_from_directory('static', 'brain.html')
+    return send_from_directory(app.static_folder, 'brain.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    try:
+        return send_from_directory(app.static_folder, path)
+    except:
+        return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/api/status')
 def api_status():
