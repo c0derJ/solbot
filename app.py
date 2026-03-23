@@ -187,6 +187,10 @@ def price_ticker():
 def index():
     return send_from_directory('static', 'index.html')
 
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory('static', path)
+
 @app.route('/brain')
 def brain():
     return send_from_directory('static', 'brain.html')
