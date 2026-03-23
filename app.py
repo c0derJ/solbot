@@ -183,20 +183,19 @@ def price_ticker():
 # ══════════════════════════════════════════════════
 # REST API ENDPOINTS
 # ══════════════════════════════════════════════════
-@app.route('/')
+ @app.route('/')
 def index():
-    return send_from_directory(app.static_folder, 'index.html')
+    import os
+    path = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
+    with open(path, 'r') as f:
+        return f.read(), 200, {'Content-Type': 'text/html'}
 
 @app.route('/brain')
 def brain():
-    return send_from_directory(app.static_folder, 'brain.html')
-
-@app.route('/<path:path>')
-def serve_static(path):
-    try:
-        return send_from_directory(app.static_folder, path)
-    except:
-        return send_from_directory(app.static_folder, 'index.html')
+    import os
+    path = os.path.join(os.path.dirname(__file__), 'static', 'brain.html')
+    with open(path, 'r') as f:
+        return f.read(), 200, {'Content-Type': 'text/html'}
 
 @app.route('/api/status')
 def api_status():
