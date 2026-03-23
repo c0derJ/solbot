@@ -9,7 +9,7 @@ import json
 import logging
 import requests
 import pandas as pd
-import pandas_ta as ta
+import ta
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
