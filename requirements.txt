@@ -3,7 +3,7 @@ flask-cors==4.0.0
 flask-socketio==5.3.6
 numpy==1.26.4
 pandas==2.1.4
-pandas-ta==0.3.14b0
+pandas-ta==0.4.67b0
 krakenex==2.1.0
 requests==2.31.0
 apscheduler==3.10.4
