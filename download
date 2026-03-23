@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+pattern_weights.json
+*.log
+.DS_Store
+venv/
+env/
+node_modules/

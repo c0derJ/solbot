@@ -1,0 +1,13 @@
+flask==3.0.0
+flask-cors==4.0.0
+flask-socketio==5.3.6
+pandas==2.1.4
+pandas-ta==0.3.14b
+krakenex==2.1.0
+requests==2.31.0
+apscheduler==3.10.4
+anthropic==0.25.0
+ntscraper==0.3.7
+eventlet==0.35.1
+gunicorn==21.2.0
+python-dotenv==1.0.0
