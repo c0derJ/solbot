@@ -306,7 +306,8 @@ def start_background_tasks():
     add_log(f'Mode: {"PAPER TRADING — no real money at risk" if PAPER_TRADING else "LIVE TRADING"}', 'warning')
 
 
+start_background_tasks()
+
 if __name__ == '__main__':
-    start_background_tasks()
     port = int(os.getenv('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=False)
