@@ -99,35 +99,23 @@ def get_ohlcv(interval=60, candles=100):
 # TECHNICAL ANALYSIS ENGINE
 # ══════════════════════════════════════════════════
 def calculate_indicators(df):
-    """Calculate RSI, MACD, Bollinger Bands, Moving Averages on OHLCV dataframe."""
     try:
-        # RSI
-        df['rsi'] = ta.rsi(df['close'], length=14)
-
-        # MACD
-        macd = ta.macd(df['close'], fast=12, slow=26, signal=9)
-        df['macd']        = macd['MACD_12_26_9']
-        df['macd_signal'] = macd['MACDs_12_26_9']
-        df['macd_hist']   = macd['MACDh_12_26_9']
-
-        # Bollinger Bands
-        bb = ta.bbands(df['close'], length=20, std=2)
-        df['bb_upper'] = bb['BBU_20_2.0']
-        df['bb_mid']   = bb['BBM_20_2.0']
-        df['bb_lower'] = bb['BBL_20_2.0']
-
-        # Moving Averages
-        df['ma20'] = ta.sma(df['close'], length=20)
-        df['ma50'] = ta.sma(df['close'], length=50)
-        df['ema9'] = ta.ema(df['close'], length=9)
-
-        # ATR for volatility
-        df['atr'] = ta.atr(df['high'], df['low'], df['close'], length=14)
-
-        log.info("Indicators calculated successfully")
+        df['rsi'] = ta.momentum.RSIIndicator(df['close'], window=14).rsi()
+        macd = ta.trend.MACD(df['close'])
+        df['macd'] = macd.macd()
+        df['macd_signal'] = macd.macd_signal()
+        df['macd_hist'] = macd.macd_diff()
+        bb = ta.volatility.BollingerBands(df['close'])
+        df['bb_upper'] = bb.bollinger_hband()
+        df['bb_mid'] = bb.bollinger_mavg()
+        df['bb_lower'] = bb.bollinger_lband()
+        df['ma20'] = ta.trend.SMAIndicator(df['close'], window=20).sma_indicator()
+        df['ma50'] = ta.trend.SMAIndicator(df['close'], window=50).sma_indicator()
+        df['ema9'] = ta.trend.EMAIndicator(df['close'], window=9).ema_indicator()
+        df['atr'] = ta.volatility.AverageTrueRange(df['high'], df['low'], df['close']).average_true_range()
         return df
     except Exception as e:
-        log.error(f"Indicator calculation error: {e}")
+        log.error(f"Indicator error: {e}")
         return df
 
 
