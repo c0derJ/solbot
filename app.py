@@ -183,19 +183,15 @@ def price_ticker():
 # ══════════════════════════════════════════════════
 # REST API ENDPOINTS
 # ══════════════════════════════════════════════════
- @app.route('/')
+@app.route('/')
 def index():
-    import os
-    path = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
-    with open(path, 'r') as f:
-        return f.read(), 200, {'Content-Type': 'text/html'}
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'index.html'), 'r', encoding='utf-8') as f:
+        return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
 
 @app.route('/brain')
 def brain():
-    import os
-    path = os.path.join(os.path.dirname(__file__), 'static', 'brain.html')
-    with open(path, 'r') as f:
-        return f.read(), 200, {'Content-Type': 'text/html'}
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'brain.html'), 'r', encoding='utf-8') as f:
+        return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
 
 @app.route('/api/status')
 def api_status():
@@ -304,6 +300,8 @@ def start_background_tasks():
     add_log('SOLBOT systems initialized. Press START to begin trading.', 'sol')
     add_log(f'Mode: {"PAPER TRADING — no real money at risk" if PAPER_TRADING else "LIVE TRADING"}', 'warning')
 
+
+start_background_tasks()
 
 start_background_tasks()
 
