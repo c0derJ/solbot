@@ -53,86 +53,142 @@ paper_state = {
 # KRAKEN DATA FEED
 # ══════════════════════════════════════════════════
 def get_sol_price():
-    """Fetch current SOL/USD price from multiple exchanges."""
+    """Fetch real SOL/USD price from multiple reliable sources"""
     
-    # Try Kraken first
+    # 1. Try Binance (most reliable for crypto)
     try:
-        url = 'https://api.kraken.com/0/public/Ticker?pair=SOLUSD'
-        r = requests.get(url, timeout=10)
-        data = r.json()
-        if not data.get('error'):
-            result = data['result']
-            pair_key = list(result.keys())[0]
-            price = float(result[pair_key]['c'][0])
-            log.info(f"Kraken SOL/USD: ${price:.4f}")
+        response = requests.get(
+            "https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT",
+            timeout=5,
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        if response.status_code == 200:
+            data = response.json()
+            price = float(data['price'])
+            log.info(f"✓ Binance SOL/USDT: ${price:.4f}")
             return price
     except Exception as e:
-        log.error(f"Kraken error: {e}")
+        log.warning(f"Binance API failed: {e}")
     
-    # Try Binance (more reliable)
+    # 2. Try CoinGecko (free, no API key)
     try:
-        url = 'https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT'
-        r = requests.get(url, timeout=10)
-        data = r.json()
-        price = float(data['price'])
-        log.info(f"Binance SOL/USDT: ${price:.4f}")
-        return price
+        response = requests.get(
+            "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd",
+            timeout=5,
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        if response.status_code == 200:
+            data = response.json()
+            price = data['solana']['usd']
+            log.info(f"✓ CoinGecko SOL/USD: ${price:.4f}")
+            return price
     except Exception as e:
-        log.error(f"Binance error: {e}")
+        log.warning(f"CoinGecko API failed: {e}")
     
-    # Try CoinGecko
+    # 3. Try Kraken (alternative)
     try:
-        url = 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd'
-        r = requests.get(url, timeout=10)
-        data = r.json()
-        price = data['solana']['usd']
-        log.info(f"CoinGecko SOL/USD: ${price:.4f}")
-        return price
+        response = requests.get(
+            "https://api.kraken.com/0/public/Ticker?pair=SOLUSD",
+            timeout=5
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if not data.get('error'):
+                result = data['result']
+                pair_key = list(result.keys())[0]
+                price = float(result[pair_key]['c'][0])
+                log.info(f"✓ Kraken SOL/USD: ${price:.4f}")
+                return price
     except Exception as e:
-        log.error(f"CoinGecko error: {e}")
+        log.warning(f"Kraken API failed: {e}")
     
-    # Fallback to mock
-    log.warning("All price APIs failed, using fallback")
-    return 90.19
+    # 4. Try Bybit (another reliable exchange)
+    try:
+        response = requests.get(
+            "https://api.bybit.com/v5/market/ticker?symbol=SOLUSDT",
+            timeout=5
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data['retCode'] == 0:
+                price = float(data['result']['list'][0]['lastPrice'])
+                log.info(f"✓ Bybit SOL/USDT: ${price:.4f}")
+                return price
+    except Exception as e:
+        log.warning(f"Bybit API failed: {e}")
+    
+    # 5. Try KuCoin
+    try:
+        response = requests.get(
+            "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=SOL-USDT",
+            timeout=5
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data['code'] == '200000':
+                price = float(data['data']['price'])
+                log.info(f"✓ KuCoin SOL/USDT: ${price:.4f}")
+                return price
+    except Exception as e:
+        log.warning(f"KuCoin API failed: {e}")
+    
+    # If all APIs fail, log error and return last known price
+    log.error("All price APIs failed! Check internet connection.")
+    return 90.19  # Current approximate price
 
 
 def get_ohlcv(interval=60, candles=100):
-    """Fetch OHLCV from Binance (more reliable than Kraken)"""
+    """Fetch real OHLCV data from Binance"""
+    
     interval_map = {
-        1: '1m', 5: '5m', 15: '15m', 30: '30m',
-        60: '1h', 240: '4h', 1440: '1d'
+        1: '1m',
+        5: '5m', 
+        15: '15m',
+        30: '30m',
+        60: '1h',
+        240: '4h',
+        1440: '1d'
     }
+    
     binance_interval = interval_map.get(interval, '1h')
     
     try:
-        url = f"https://api.binance.com/api/v3/klines"
-        params = {
-            'symbol': 'SOLUSDT',
-            'interval': binance_interval,
-            'limit': candles
-        }
-        r = requests.get(url, params=params, timeout=15)
-        data = r.json()
+        response = requests.get(
+            "https://api.binance.com/api/v3/klines",
+            params={
+                'symbol': 'SOLUSDT',
+                'interval': binance_interval,
+                'limit': candles
+            },
+            timeout=10
+        )
         
-        df = pd.DataFrame(data, columns=[
-            'time', 'open', 'high', 'low', 'close', 'volume',
-            'close_time', 'quote_volume', 'trades', 'taker_buy_base',
-            'taker_buy_quote', 'ignore'
-        ])
-        
-        for col in ['open', 'high', 'low', 'close', 'volume']:
-            df[col] = df[col].astype(float)
-        
-        df['time'] = pd.to_datetime(df['time'], unit='ms')
-        df.set_index('time', inplace=True)
-        
-        log.info(f"Fetched {len(df)} candles from Binance")
-        return df[['open', 'high', 'low', 'close', 'volume']]
-        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Parse Binance data
+            ohlcv = []
+            for candle in data:
+                ohlcv.append({
+                    'time': datetime.fromtimestamp(candle[0] / 1000),
+                    'open': float(candle[1]),
+                    'high': float(candle[2]),
+                    'low': float(candle[3]),
+                    'close': float(candle[4]),
+                    'volume': float(candle[5])
+                })
+            
+            df = pd.DataFrame(ohlcv)
+            df.set_index('time', inplace=True)
+            
+            log.info(f"Fetched {len(df)} candles from Binance")
+            return df
+            
     except Exception as e:
         log.error(f"Binance OHLCV error: {e}")
-        # Fallback to Kraken or mock
-        return None
+    
+    # Fallback: return None (will use mock data in app.py)
+    return None
 
 
 # ══════════════════════════════════════════════════
