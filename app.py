@@ -187,7 +187,6 @@ def price_ticker():
 def index():
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'index.html'), 'r', encoding='utf-8') as f:
         return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
-
 @app.route('/brain')
 def brain():
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'brain.html'), 'r', encoding='utf-8') as f:
