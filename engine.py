@@ -97,26 +97,41 @@ def get_sol_price():
 
 
 def get_ohlcv(interval=60, candles=100):
-    """Fetch OHLCV candles from Kraken for SOL/USD."""
+    """Fetch OHLCV from Binance (more reliable than Kraken)"""
+    interval_map = {
+        1: '1m', 5: '5m', 15: '15m', 30: '30m',
+        60: '1h', 240: '4h', 1440: '1d'
+    }
+    binance_interval = interval_map.get(interval, '1h')
+    
     try:
-        url = f'https://api.kraken.com/0/public/OHLC?pair=SOLUSD&interval={interval}'
-        r = requests.get(url, timeout=15)
+        url = f"https://api.binance.com/api/v3/klines"
+        params = {
+            'symbol': 'SOLUSDT',
+            'interval': binance_interval,
+            'limit': candles
+        }
+        r = requests.get(url, params=params, timeout=15)
         data = r.json()
-        if data.get('error'):
-            log.error(f"Kraken OHLC error: {data['error']}")
-            return None
-        result = data['result']
-        pair_key = [k for k in result.keys() if k != 'last'][0]
-        raw = result[pair_key][-candles:]
-        df = pd.DataFrame(raw, columns=['time','open','high','low','close','vwap','volume','count'])
-        for col in ['open','high','low','close','volume']:
+        
+        df = pd.DataFrame(data, columns=[
+            'time', 'open', 'high', 'low', 'close', 'volume',
+            'close_time', 'quote_volume', 'trades', 'taker_buy_base',
+            'taker_buy_quote', 'ignore'
+        ])
+        
+        for col in ['open', 'high', 'low', 'close', 'volume']:
             df[col] = df[col].astype(float)
-        df['time'] = pd.to_datetime(df['time'], unit='s')
+        
+        df['time'] = pd.to_datetime(df['time'], unit='ms')
         df.set_index('time', inplace=True)
-        log.info(f"Fetched {len(df)} candles for SOL/USD {interval}m")
-        return df
+        
+        log.info(f"Fetched {len(df)} candles from Binance")
+        return df[['open', 'high', 'low', 'close', 'volume']]
+        
     except Exception as e:
-        log.error(f"OHLCV fetch error: {e}")
+        log.error(f"Binance OHLCV error: {e}")
+        # Fallback to Kraken or mock
         return None
 
 
