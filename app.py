@@ -66,9 +66,14 @@ def add_log(msg, level='info'):
 def run_scan():
     """Core hourly scan: fetch data → analyze → signal → trade."""
     global last_scan, last_signal, last_indicators, last_patterns, last_sentiment, scan_count
-
+    
+    # Debug: Test price fetch
+    test_price = get_sol_price()
+    add_log(f"DEBUG: Current SOL price from API: ${test_price}", 'info')
+    
     if not bot_running or bot_paused:
         return
+    # ... rest of your code
 
     scan_count += 1
     add_log(f'Scan #{scan_count} initiated — fetching SOL/USD 1H data from Kraken...', 'info')
