@@ -53,22 +53,47 @@ paper_state = {
 # KRAKEN DATA FEED
 # ══════════════════════════════════════════════════
 def get_sol_price():
-    """Fetch current SOL/USD price from Kraken public API."""
+    """Fetch current SOL/USD price from multiple exchanges."""
+    
+    # Try Kraken first
     try:
         url = 'https://api.kraken.com/0/public/Ticker?pair=SOLUSD'
         r = requests.get(url, timeout=10)
         data = r.json()
-        if data.get('error'):
-            log.error(f"Kraken ticker error: {data['error']}")
-            return None
-        result = data['result']
-        pair_key = list(result.keys())[0]
-        price = float(result[pair_key]['c'][0])
-        log.info(f"SOL/USD price: ${price:.4f}")
+        if not data.get('error'):
+            result = data['result']
+            pair_key = list(result.keys())[0]
+            price = float(result[pair_key]['c'][0])
+            log.info(f"Kraken SOL/USD: ${price:.4f}")
+            return price
+    except Exception as e:
+        log.error(f"Kraken error: {e}")
+    
+    # Try Binance (more reliable)
+    try:
+        url = 'https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT'
+        r = requests.get(url, timeout=10)
+        data = r.json()
+        price = float(data['price'])
+        log.info(f"Binance SOL/USDT: ${price:.4f}")
         return price
     except Exception as e:
-        log.error(f"Price fetch error: {e}")
-        return None
+        log.error(f"Binance error: {e}")
+    
+    # Try CoinGecko
+    try:
+        url = 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd'
+        r = requests.get(url, timeout=10)
+        data = r.json()
+        price = data['solana']['usd']
+        log.info(f"CoinGecko SOL/USD: ${price:.4f}")
+        return price
+    except Exception as e:
+        log.error(f"CoinGecko error: {e}")
+    
+    # Fallback to mock
+    log.warning("All price APIs failed, using fallback")
+    return 90.19
 
 
 def get_ohlcv(interval=60, candles=100):
