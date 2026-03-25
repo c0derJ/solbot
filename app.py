@@ -288,27 +288,17 @@ def on_disconnect():
 # ══════════════════════════════════════════════════
 def start_background_tasks():
     global bot_running
-    # Hourly scan scheduler
     try:
         scheduler.add_job(run_scan, 'interval', minutes=60, id='hourly_scan')
         scheduler.start()
     except Exception as e:
         log.warning(f"Scheduler already running: {e}")
-
-    # Auto-start bot
     bot_running = True
-
-    # Price ticker thread
     ticker_thread = threading.Thread(target=price_ticker, daemon=True)
     ticker_thread.start()
-
-    # Immediate first scan in background
     threading.Thread(target=run_scan, daemon=True).start()
+    log.info('SOLBOT auto-started.')
 
-    log.info('SOLBOT auto-started. Bot is running 24/7 on Railway.')
-
-
-# ── Auto-start when gunicorn loads the module ──
 start_background_tasks()
 
 if __name__ == '__main__':
