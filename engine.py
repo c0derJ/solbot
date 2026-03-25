@@ -74,58 +74,9 @@ def get_sol_price():
 
 
 def get_ohlcv(interval=60, candles=100):
-    """Fetch real OHLCV data from Binance"""
-    
-    interval_map = {
-        1: '1m',
-        5: '5m', 
-        15: '15m',
-        30: '30m',
-        60: '1h',
-        240: '4h',
-        1440: '1d'
-    }
-    
-    binance_interval = interval_map.get(interval, '1h')
-    
-    try:
-        response = requests.get(
-            "https://api.binance.com/api/v3/klines",
-            params={
-                'symbol': 'SOLUSDT',
-                'interval': binance_interval,
-                'limit': candles
-            },
-            timeout=10
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            
-            # Parse Binance data
-            ohlcv = []
-            for candle in data:
-                ohlcv.append({
-                    'time': datetime.fromtimestamp(candle[0] / 1000),
-                    'open': float(candle[1]),
-                    'high': float(candle[2]),
-                    'low': float(candle[3]),
-                    'close': float(candle[4]),
-                    'volume': float(candle[5])
-                })
-            
-            df = pd.DataFrame(ohlcv)
-            df.set_index('time', inplace=True)
-            
-            log.info(f"Fetched {len(df)} candles from Binance")
-            return df
-            
-    except Exception as e:
-        log.error(f"Binance OHLCV error: {e}")
-    
-    # Fallback: return None (will use mock data in app.py)
+    """Return None - API calls failing, will use mock data"""
+    log.warning("OHLCV API calls failing, using fallback mock data")
     return None
-
 
 # ══════════════════════════════════════════════════
 # TECHNICAL ANALYSIS ENGINE
