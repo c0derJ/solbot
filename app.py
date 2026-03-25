@@ -66,14 +66,9 @@ def add_log(msg, level='info'):
 def run_scan():
     """Core hourly scan: fetch data → analyze → signal → trade."""
     global last_scan, last_signal, last_indicators, last_patterns, last_sentiment, scan_count
-    
-    # Debug: Test price fetch
-    test_price = get_sol_price()
-    add_log(f"DEBUG: Current SOL price from API: ${test_price}", 'info')
-    
+
     if not bot_running or bot_paused:
         return
-    # ... rest of your code
 
     scan_count += 1
     add_log(f'Scan #{scan_count} initiated — fetching SOL/USD 1H data from Kraken...', 'info')
@@ -190,12 +185,11 @@ def price_ticker():
 # ══════════════════════════════════════════════════
 @app.route('/')
 def index():
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'index.html'), 'r', encoding='utf-8') as f:
-        return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
+    return send_from_directory('static', 'index.html')
+
 @app.route('/brain')
 def brain():
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'brain.html'), 'r', encoding='utf-8') as f:
-        return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
+    return send_from_directory('static', 'brain.html')
 
 @app.route('/api/status')
 def api_status():
@@ -293,18 +287,28 @@ def on_disconnect():
 # STARTUP
 # ══════════════════════════════════════════════════
 def start_background_tasks():
+    global bot_running
     # Hourly scan scheduler
-    scheduler.add_job(run_scan, 'interval', minutes=60, id='hourly_scan')
-    scheduler.start()
+    try:
+        scheduler.add_job(run_scan, 'interval', minutes=60, id='hourly_scan')
+        scheduler.start()
+    except Exception as e:
+        log.warning(f"Scheduler already running: {e}")
+
+    # Auto-start bot
+    bot_running = True
 
     # Price ticker thread
     ticker_thread = threading.Thread(target=price_ticker, daemon=True)
     ticker_thread.start()
 
-    add_log('SOLBOT systems initialized. Press START to begin trading.', 'sol')
-    add_log(f'Mode: {"PAPER TRADING — no real money at risk" if PAPER_TRADING else "LIVE TRADING"}', 'warning')
+    # Immediate first scan in background
+    threading.Thread(target=run_scan, daemon=True).start()
+
+    log.info('SOLBOT auto-started. Bot is running 24/7 on Railway.')
 
 
+# ── Auto-start when gunicorn loads the module ──
 start_background_tasks()
 
 if __name__ == '__main__':
